@@ -1,0 +1,46 @@
+# A package template to define a configurable number sensor that can also
+# receive state from MQTT. Inspired from ESPresence, this number has the
+# ability to receive global commands. Such commands should replace the
+# device ID in the topic with `*`.
+#
+# Args:
+#   number_id: The ID of the number.
+#   number_name: The name of the number.
+#   relative_topic_name: The topic fragment that will be used to construct
+#       the MQTT topics. The state topic will have no suffix, while command
+#       topics will have suffix `/set`.
+#   logger: The name of the logger used by the number.
+#   min_value: The minimum value.
+#   max_value: The maximum value.
+#   step: The minimum step.
+#   initial_value: The initial value.
+mqtt:
+  on_message:
+    - topic: ${mqtt_wildcard_device_prefix}/${relative_topic_name}/set
+      then:
+        - lambda: |-
+            auto val = esphome::parse_number<float>(x);
+            if (!val.has_value()) {
+              ESP_LOGW(
+                  "${logger}",
+                  "Payload sent to '%s' is not a number. Value: '%s'",
+                  "${mqtt_device_prefix}/${relative_topic_name}/set",
+                  x.c_str());
+              return;
+            }
+            id(${number_id}).publish_state(val.value());
+
+number:
+  - platform: template
+    id: ${number_id}
+    name: ${name} ${number_name}
+    entity_category: config
+    min_value: ${min_value}
+    max_value: ${max_value}
+    step: ${step}
+    optimistic: true
+    restore_value: true
+    initial_value: ${initial_value}
+    state_topic: ${mqtt_device_prefix}/${relative_topic_name}
+    command_topic: ${mqtt_device_prefix}/${relative_topic_name}/set
+

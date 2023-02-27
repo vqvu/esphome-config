@@ -1,0 +1,16 @@
+substitutions:
+  mqtt_global_prefix: esphome
+  mqtt_device_prefix: ${mqtt_global_prefix}/devices/${name}
+  mqtt_wildcard_device_prefix: ${mqtt_global_prefix}/devices/*
+
+mqtt:
+  id: mqtt_client
+  broker: ${mqtt_broker}
+  username: ${mqtt_username}
+  password: ${mqtt_password}
+  discovery: false
+  discovery_unique_id_generator: mac
+  topic_prefix: ${mqtt_device_prefix}
+  log_topic:
+    topic: ${mqtt_device_prefix}/logs
+    level: WARN

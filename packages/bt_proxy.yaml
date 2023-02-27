@@ -1,0 +1,26 @@
+packages:
+  device_base: !include device_base.yaml
+  m5stack_atom_lite: !include m5stack_atom_lite_arduino.yaml
+  mqtt: !include mqtt.yaml
+  esp32_ble_tracker: !include esp32_ble_tracker.yaml
+  mqtt_room_presence: !include mqtt_room_presence.yaml
+  mqtt_room_presence_julis: !include
+    file: ../templates/mqtt_room_presence/device_sensor_package.yaml
+    vars:
+      id_base: julis_ble_beacon
+      ibeacon_uuid: 7f17fb45-2242-4e41-9408-b479baf34489
+      ibeacon_major: 100
+      ibeacon_minor: 1
+
+logger:
+  level: DEBUG
+  logs:
+    component: DEBUG
+    json: DEBUG
+    sensor: DEBUG
+    esp32_ble_tracker: DEBUG
+    bluetooth_proxy: DEBUG
+
+bluetooth_proxy:
+  active: True
+

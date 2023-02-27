@@ -1,0 +1,58 @@
+esphome:
+  on_boot:
+    then:
+      - lambda: |-
+          auto device_id = mqtt_room_presence::make_ibeacon_device_id(
+              mqtt_room_presence::normalize_uuid("${ibeacon_uuid}"),
+              ${ibeacon_major},
+              ${ibeacon_minor});
+          std::map<std::string, esphome::sensor::Sensor*> distance_sensors_map;
+          distance_sensors_map["distance"] = id(mqtt_room_presence_${id_base}_distance);
+          distance_sensors_map["distance_raw"] = id(mqtt_room_presence_${id_base}_distance_raw);
+          distance_sensors_map["distance_median"] = id(mqtt_room_presence_${id_base}_distance_median);
+          distance_sensors_map["distance_median_mean"] = id(mqtt_room_presence_${id_base}_distance_median_mean);
+          auto tracked_device = new mqtt_room_presence::TrackedDevice(
+              device_id,
+              "${room_slug}",
+              "${mqtt_room_presence_global_prefix}",
+              distance_sensors_map,
+              id(mqtt_room_presence_${id_base}_rssi));
+          id(mqtt_room_presence_tracked_devices)[device_id] = tracked_device;
+          id(mqtt_room_presence_${id_base}_tracked_device) = tracked_device;
+
+globals:
+  - id: mqtt_room_presence_${id_base}_tracked_device
+    type: "void*"
+    restore_value: no
+
+sensor:
+  - platform: template
+    id: mqtt_room_presence_${id_base}_distance
+    filters:
+      - sliding_window_moving_average:
+          window_size: 15
+          send_every: 1
+
+  - platform: template
+    id: mqtt_room_presence_${id_base}_distance_raw
+
+  - platform: template
+    id: mqtt_room_presence_${id_base}_distance_median
+    filters:
+      - median:
+          window_size: 5
+          send_every: 1
+
+  - platform: template
+    id: mqtt_room_presence_${id_base}_distance_median_mean
+    filters:
+      - median:
+          window_size: 5
+          send_every: 1
+      - sliding_window_moving_average:
+          window_size: 15
+          send_every: 1
+
+  - platform: template
+    id: mqtt_room_presence_${id_base}_rssi
+

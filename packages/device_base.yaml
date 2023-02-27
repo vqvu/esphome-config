@@ -1,0 +1,42 @@
+esphome:
+  name: ${name}
+
+wifi:
+  ssid: ${wifi_ssid}
+  password: ${wifi_password}
+  domain: .${wifi_domain}
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: ${api_encryption_key}
+
+ota:
+  password: ${ota_password}
+
+# MDNS doesn't work with k8s anyway...
+mdns:
+  disabled: true
+
+button:
+  - platform: safe_mode
+    name: ${name} Safe Mode Boot
+    entity_category: diagnostic
+  - platform: restart
+    name: ${name} Restart
+    entity_category: diagnostic
+  - platform: factory_reset
+    name: ${name} Factory Reset
+    entity_category: diagnostic
+
+sensor:
+  - platform: uptime
+    name: ${name} Uptime
+
+binary_sensor:
+  - platform: status
+    name: ${name} Status
+

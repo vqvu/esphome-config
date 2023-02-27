@@ -1,0 +1,55 @@
+esp32:
+  board: m5stack-atom
+  framework:
+    type: esp-idf
+    version: recommended
+
+# esphome:
+#   on_loop:
+#     then:
+#       # Adapted from https://github.com/esphome/feature-requests/issues/1603#issuecomment-1018994074
+#       - lambda: |-
+#           static optional<uint32_t> last_state;
+#           auto state = App.get_app_state();
+#           if (!last_state.has_value() || last_state.value() != state) {
+#             auto call = id(led).turn_on();
+#             call.set_save(false);
+#             if (state & STATUS_LED_ERROR) {
+#               call.set_red(1);
+#               call.set_blue(0);
+#               call.set_green(0);
+#               call.set_effect("ERROR");
+#             } else if (state & STATUS_LED_WARNING) {
+#               call.set_red(1);
+#               call.set_blue(0);
+#               call.set_green(1);
+#               call.set_effect("WARNING");
+#             } else {
+#               call.set_brightness(0.25);
+#               call.set_red(0);
+#               call.set_blue(0);
+#               call.set_green(1);
+#               call.set_effect("none");
+#             }
+#             call.perform();
+#             last_state = optional<uint32_t>(state);
+#           }
+# 
+# light:
+#   - platform: fastled_clockless
+#     id: led
+#     pin: GPIO27
+#     chipset: SK6812
+#     num_leds: 1
+#     rgb_order: GRB
+#     restore_mode: ALWAYS_OFF
+#     effects:
+#       - pulse:
+#           name: ERROR
+#           transition_length: 0.25s
+#           update_interval: 0.25s
+#       - pulse:
+#           name: WARNING
+#           transition_length: 1s
+#           update_interval: 1s
+

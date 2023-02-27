@@ -1,0 +1,72 @@
+# An implementation of the Room Assistant MQTT Room Presence integration
+# protocol. It currently only supports iBeacon devices.
+# 
+# Users should include this package and one sensor package from
+# templates/mqtt_room_presence/device_sensor_package.yaml for each device.
+substitutions:
+  room_slug: ${name_slug}
+  mqtt_room_presence_global_prefix: ${mqtt_global_prefix}/room_presence
+
+packages:
+  mqtt_room_presence_absorption_factor_sensor: !include
+    file: ../templates/mqtt/configurable_number_package.yaml
+    vars:
+      number_id: mqtt_room_presence_absorption_factor
+      number_name: "Room Presence Absorption Factor"
+      relative_topic_name: room_presence/absorption
+      logger: mqtt_room_presence
+      min_value: 0.01
+      max_value: 10000
+      step: 0.01
+      initial_value: 3.5
+
+esphome:
+  includes:
+    - includes/mqtt_room_presence.h
+
+globals:
+  - id: mqtt_room_presence_tracked_devices
+    # Hack: Using void* to tunnel the type custom type through,
+    # since ESPHome doesn't include the type before globals.
+    type: "std::map<std::string, void*>"
+    restore_value: no
+
+esp32_ble_tracker:
+  on_ble_advertise:
+    - then:
+        - lambda: |-
+            if (!x.get_ibeacon().has_value()) {
+              return;
+            }
+
+            auto& ibeacon = x.get_ibeacon().value();
+            std::string device_id = mqtt_room_presence::to_device_id_f(ibeacon);
+            ESP_LOGD("mqtt_room_presence", "Received ibeacon device: %s", device_id.c_str());
+            auto& sensor_map = id(mqtt_room_presence_tracked_devices);
+            auto match = sensor_map.find(device_id);
+            if (match == sensor_map.end()) {
+              return;
+            }
+
+            auto absorption = id(mqtt_room_presence_absorption_factor).state;
+            if (isnan(absorption)) {
+              ESP_LOGW("mqtt_room_presence", "Absorption factor is NaN. Skipping");
+            }
+            if (absorption == 0) {
+              ESP_LOGW("mqtt_room_presence", "Absorption factor is 0. Skipping");
+            }
+
+            int rssi = x.get_rssi();
+            int8_t rssi_at_1m = ibeacon.get_signal_power();
+            float distance = pow(10, (rssi_at_1m - rssi) / (10 * absorption));
+            ESP_LOGV("mqtt_room_presence", "  RSSI@1m: %d", rssi_at_1m);
+            ESP_LOGV("mqtt_room_presence", "  RSSI: %d", rssi);
+            ESP_LOGV("mqtt_room_presence", "  Absorption: %f", absorption);
+            ESP_LOGV("mqtt_room_presence", "  Distance: %f", distance);
+
+            auto tracked_device = mqtt_room_presence::to_tracked_device(match->second);
+            tracked_device->record_distance(distance);
+            tracked_device->record_rssi(rssi);
+            tracked_device->record_rssi_at_1m(rssi_at_1m);
+            tracked_device->publish(id(mqtt_client));
+

@@ -1,0 +1,41 @@
+substitutions:
+  name: bt-proxy-dev
+  room_slug: dev
+
+  wifi_ssid: !secret wifi_ssid
+  wifi_password: !secret wifi_password
+  wifi_domain: !secret wifi_domain
+
+  api_encryption_key: I8EQEM0YZ0lmof3gQOJ+NyMjjRZWw0N5OVKxBOaDYYA=
+  ota_password: ecad86a246a66dc7b707d08ad032effa
+
+  mqtt_broker: !secret mqtt_broker
+  mqtt_username: !secret mqtt_username
+  mqtt_password: !secret mqtt_password
+  mqtt_global_prefix: esphome-dev
+
+packages:
+  device_base: !include packages/device_base.yaml
+  m5stack_atom_lite: !include packages/m5stack_atom_lite_esp_idf.yaml
+  esp32_ble_tracker: !include packages/esp32_ble_tracker.yaml
+
+logger:
+  level: VERBOSE
+  logs:
+    component: DEBUG
+    json: DEBUG
+    sensor: DEBUG
+    esp32_ble_tracker: DEBUG
+    bluetooth_proxy: DEBUG
+    bluetooth_proxy.connection: VERBOSE
+
+bluetooth_proxy:
+  active: True
+
+esp32_ble_tracker:
+  on_ble_advertise:
+    - then:
+        - lambda: |
+            if (x.address_str() == "A4:C1:38:40:33:03") {
+              ESP_LOGD("ble_debug", "Received advertisement from: %s, name: %s", x.address_str().c_str(), x.get_name().c_str());
+            }

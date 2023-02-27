@@ -1,0 +1,15 @@
+esphome:
+  name: esphome
+  name_add_mac_suffix: true
+
+esp32:
+  board: m5stack-atom
+  framework:
+    type: arduino
+
+ota:
+
+wifi:
+  ap:
+
+captive_portal:
